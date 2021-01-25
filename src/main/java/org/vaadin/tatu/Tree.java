@@ -679,4 +679,9 @@ public class Tree<T> extends Composite<Div>
     public void setHeightByRows(boolean heightByRows) {
     	treeGrid.setHeightByRows(heightByRows);
     }
+
+	@Override
+	public void setDataProvider(HierarchicalDataProvider<T, ?> dataProvider) {
+        treeGrid.setDataProvider(dataProvider);		
+	}
 }
