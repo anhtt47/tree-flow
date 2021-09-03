@@ -4,12 +4,12 @@ import java.util.Collections;
 import java.util.stream.Stream;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.NativeButton;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
 
 @Route("")
 public class View extends Div {
@@ -28,8 +28,9 @@ public class View extends Div {
                 departmentData::getChildDepartments);
 
         tree.setItemIconProvider(item -> getIcon(item));
+        tree.setItemIconSrcProvider(item -> getImageIconSrc(item));
         tree.setItemTitleProvider(Department::getManager);
-        
+
         tree.addExpandListener(event -> message.setValue(
                 String.format("Expanded %s item(s)", event.getItems().size())
                         + "\n" + message.getValue()));
@@ -38,22 +39,44 @@ public class View extends Div {
                         + "\n" + message.getValue()));
 
         tree.asSingleSelect().addValueChangeListener(event -> {
-        	if (event.getValue() != null) System.out.println(event.getValue().getName()+" selected");
+            if (event.getValue() != null)
+                System.out.println(event.getValue().getName() + " selected");
         });
-        
+
         // end-source-example
         tree.setId("treegridbasic");
         tree.setHeightByRows(true);
         setSizeFull();
-        add(withTreeToggleButtons(
-                departmentData.getRootDepartments().get(0), tree, message));
+        add(withTreeToggleButtons(departmentData.getRootDepartments().get(0),
+                tree, message));
+
+        Tree<Department> treeWithoutIconSrcProvider = new Tree<>(
+                Department::getName);
+        treeWithoutIconSrcProvider.setHeightByRows(true);
+        treeWithoutIconSrcProvider.setItems(departmentData.getRootDepartments(),
+                departmentData::getChildDepartments);
+        treeWithoutIconSrcProvider.setItemIconProvider(item -> getIcon(item));
+        add(treeWithoutIconSrcProvider);
     }
-    
+
+    private StreamResource getImageIconSrc(Department item) {
+        if (item.getName().equalsIgnoreCase("vaadin")) {
+            return new StreamResource("vaadin.svg", () -> getClass()
+                    .getClassLoader().getResourceAsStream("images/vaadin.svg"));
+        } else {
+            return null;
+        }
+    }
+
     private VaadinIcon getIcon(Department item) {
-    	if (item.getParent() == null) return VaadinIcon.BUILDING;
-    	else return VaadinIcon.USER;
+        if (item.getParent() == null)
+            return VaadinIcon.BUILDING;
+        else if (item.getName().equalsIgnoreCase("vaadin")) {
+            return null;
+        } else
+            return VaadinIcon.USER;
     }
-    
+
     private <T> Component[] withTreeToggleButtons(T root, Tree<T> tree,
             Component... other) {
         NativeButton toggleFirstItem = new NativeButton("Toggle first item",
@@ -83,5 +106,6 @@ public class View extends Div {
         return Stream.concat(Stream.of(tree, div1, div3), Stream.of(other))
                 .toArray(Component[]::new);
     }
-    
+
 }
+
