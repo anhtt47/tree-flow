@@ -3,21 +3,27 @@
 
 # Tree
 
-Vaadin 14 Java version of Tree component
+Vaadin 21 Java version of Tree component
 
 ## Release notes
 
-### Version 1.1.1
+### Version 2.2.2
 
-- Added workaround for focus(), see https://github.com/vaadin/vaadin-grid-flow/issues/634 
+- Fixed styling
 
-### Version 1.1.0
+### Version 2.2.1
 
-- Added missing asMultiSelect() method
-- Added setSizeByRows(..)
-- Fixed sizing logic
+- Fixed regression due previous change, Images stopped working
 
-### Version 1.0.0
+### Version 2.2.0
+
+- Fix broken VaadinIcon support due change in Vaadin 21
+
+### Version 2.1.0
+
+- Support Images as icons
+
+### Version 2.0.0
 
 - Initial version
 

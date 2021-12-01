@@ -14,6 +14,8 @@ import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.HasSize;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.grid.GridMultiSelectionModel;
@@ -56,6 +58,8 @@ import com.vaadin.flow.shared.Registration;
  * @param <T>
  *            the data type
  */
+@NpmPackage(value = "@polymer/iron-icon", version = "3.0.1")
+@JsModule("@polymer/iron-icon/iron-icon.js")
 public class Tree<T> extends Composite<Div>
         implements HasHierarchicalDataProvider<T>, Focusable, HasComponents,
         HasSize, HasElement {
@@ -88,16 +92,27 @@ public class Tree<T> extends Composite<Div>
             Column<T> column = addColumn(TemplateRenderer
                     .<T> of("<vaadin-grid-tree-toggle "
                             + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                            + "<iron-icon src='[[item.iconSrc]]' icon='[[item.icon]]' style='padding-right: 10px'></iron-icon>"
+                            + "<iron-icon style$='[[item.hasNoImage]] padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
+                            + "<vaadin-icon style$='[[item.hasNoIcon]] padding-right: 10px' icon='[[item.icon]]'></vaadin-icon>"
                             + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
                     .withProperty("icon",
                             icon -> iconProvider == null ? null
                                     : getIcon(iconProvider, icon))
+                    .withProperty("hasNoIcon",
+                            icon -> (iconProvider == null)
+                                    || (getIcon(iconProvider, icon) == null)
+                                            ? "display : none;"
+                                            : null)
                     .withProperty("iconSrc",
                             icon -> iconSrcProvider == null ? null
                                     : getIconSrc(iconSrcProvider, icon))
+                    .withProperty("hasNoImage",
+                            icon -> (iconSrcProvider == null)
+                                    || (getIconSrc(iconSrcProvider,
+                                            icon) == null) ? "display : none;"
+                                                    : null)
                     .withProperty("name", value -> String
                             .valueOf(valueProvider.apply(value))));
             final SerializableComparator<T> comparator = (a,
@@ -157,7 +172,8 @@ public class Tree<T> extends Composite<Div>
                 column = addColumn(TemplateRenderer.<T> of(
                         "<vaadin-grid-tree-toggle title='[[item.title]]'"
                                 + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                                + "<iron-icon src='[[item.iconSrc]]' icon='[[item.icon]]' style='height: 15px; padding-right: 10px'></iron-icon>"
+                                + "<iron-icon style$='[[item.hasNoImage]] padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
+                                + "<vaadin-icon style$='[[item.hasNoIcon]] padding-right: 10px' icon='[[item.icon]]'></vaadin-icon>"
                                 + "[[item.name]]"
                                 + "</vaadin-grid-tree-toggle>")
                         .withProperty("leaf",
@@ -169,9 +185,20 @@ public class Tree<T> extends Composite<Div>
                         .withProperty("icon",
                                 icon -> iconProvider == null ? null
                                         : getIcon(iconProvider, icon))
+                        .withProperty("hasNoIcon",
+                                icon -> (iconProvider == null)
+                                        || (getIcon(iconProvider, icon) == null)
+                                                ? "display : none;"
+                                                : null)
                         .withProperty("iconSrc",
                                 icon -> iconSrcProvider == null ? null
                                         : getIconSrc(iconSrcProvider, icon))
+                        .withProperty("hasNoImage",
+                                icon -> (iconSrcProvider == null)
+                                        || (getIconSrc(iconSrcProvider,
+                                                icon) == null)
+                                                        ? "display : none;"
+                                                        : null)
                         .withProperty("name", value -> String
                                 .valueOf(valueProvider.apply(value))));
                 final SerializableComparator<T> comparator = (a,
