@@ -7,6 +7,15 @@ Vaadin 21 Java version of Tree component
 
 ## Release notes
 
+### Version 2.3.0
+
+- Tested with Vaadin 23
+- Control icon size by --lumo-icon-size-m custom property
+- Added htmlProvider
+- Fixed removeClassName
+- Added addThemeVariants / removeThemeVariants
+- Toggle expand/collapse only with button
+
 ### Version 2.2.2
 
 - Fixed styling
