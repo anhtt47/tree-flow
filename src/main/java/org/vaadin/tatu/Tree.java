@@ -7,6 +7,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Safelist;
+
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.DetachEvent;
@@ -14,6 +18,7 @@ import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.HasSize;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.grid.Grid;
@@ -60,6 +65,7 @@ import com.vaadin.flow.shared.Registration;
  */
 @NpmPackage(value = "@polymer/iron-icon", version = "3.0.1")
 @JsModule("@polymer/iron-icon/iron-icon.js")
+@CssImport(value = "./grid-tree-toggle-adjust.css", themeFor = "vaadin-grid-tree-toggle")
 public class Tree<T> extends Composite<Div>
         implements HasHierarchicalDataProvider<T>, Focusable, HasComponents,
         HasSize, HasElement {
@@ -85,6 +91,24 @@ public class Tree<T> extends Composite<Div>
             return column;
         }
 
+        private Column<T> setHierarchyColumnWithHtml(
+                ValueProvider<T, ?> valueProvider) {
+            Column<T> column = addColumn(TemplateRenderer
+                    .<T> of("<vaadin-grid-tree-toggle "
+                            + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]' inner-h-t-m-l=\"[[item.html]]\">"
+                            + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+                    .withProperty("leaf",
+                            item -> !getDataCommunicator().hasChildren(item))
+                    .withProperty("html", value -> sanitize(
+                            String.valueOf(valueProvider.apply(value)))));
+            final SerializableComparator<T> comparator = (a,
+                    b) -> compareMaybeComparables(valueProvider.apply(a),
+                            valueProvider.apply(b));
+            column.setComparator(comparator);
+
+            return column;
+        }
+
         private Column<T> setHierarchyColumnWithIcon(
                 ValueProvider<T, ?> valueProvider,
                 ValueProvider<T, VaadinIcon> iconProvider,
@@ -92,7 +116,7 @@ public class Tree<T> extends Composite<Div>
             Column<T> column = addColumn(TemplateRenderer
                     .<T> of("<vaadin-grid-tree-toggle "
                             + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                            + "<iron-icon style$='[[item.hasNoImage]] padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
+                            + "<iron-icon style$='[[item.hasNoImage]] height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
                             + "<vaadin-icon style$='[[item.hasNoIcon]] padding-right: 10px' icon='[[item.icon]]'></vaadin-icon>"
                             + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
                     .withProperty("leaf",
@@ -172,7 +196,7 @@ public class Tree<T> extends Composite<Div>
                 column = addColumn(TemplateRenderer.<T> of(
                         "<vaadin-grid-tree-toggle title='[[item.title]]'"
                                 + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                                + "<iron-icon style$='[[item.hasNoImage]] padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
+                                + "<iron-icon style$='[[item.hasNoImage]] height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
                                 + "<vaadin-icon style$='[[item.hasNoIcon]] padding-right: 10px' icon='[[item.icon]]'></vaadin-icon>"
                                 + "[[item.name]]"
                                 + "</vaadin-grid-tree-toggle>")
@@ -245,6 +269,15 @@ public class Tree<T> extends Composite<Div>
         protected void onDetach(DetachEvent detachEvent) {
             registrations.forEach(StreamRegistration::unregister);
             super.onDetach(detachEvent);
+        }
+
+        private String sanitize(String html) {
+            Safelist safelist = Safelist.relaxed()
+                    .addAttributes(":all", "style")
+                    .addEnforcedAttribute("a", "rel", "nofollow");
+            String sanitized = Jsoup.clean(html, "", safelist,
+                    new Document.OutputSettings().prettyPrint(false));
+            return sanitized;
         }
     }
 
@@ -565,6 +598,24 @@ public class Tree<T> extends Composite<Div>
     }
 
     /**
+     * Sets the item generator that is used to produce the html content shown
+     * for each item. By default, {@link String#valueOf(Object)} is
+     * used.
+     * <p>
+     * Note: This will override icon, title and value provider settings.
+     *
+     * @param htmlProvider
+     *            the item html provider to use, not <code>null</code>
+     */
+    public void setHtmlProvider(ValueProvider<T, ?> htmlProvider) {
+        treeGrid.removeAllColumns();
+        Objects.requireNonNull(valueProvider,
+                "Caption generator must not be null");
+        treeGrid.setHierarchyColumnWithHtml(htmlProvider);
+        treeGrid.getDataCommunicator().reset();
+    }
+
+    /**
      * Sets the item caption generator that is used to produce the strings shown
      * as the text for each item. By default, {@link String#valueOf(Object)} is
      * used.
@@ -750,8 +801,8 @@ public class Tree<T> extends Composite<Div>
         treeGrid.setClassName(style);
     }
 
-    public void removeClassName(String style) {
-        treeGrid.removeClassName(style);
+    public boolean removeClassName(String style) {
+        return treeGrid.removeClassName(style);
     }
 
     @Override
@@ -821,5 +872,13 @@ public class Tree<T> extends Composite<Div>
     @Override
     public void setDataProvider(HierarchicalDataProvider<T, ?> dataProvider) {
         treeGrid.setDataProvider(dataProvider);
+    }
+
+    public void addThemeVariants(GridVariant... gridVariants) {
+        treeGrid.addThemeVariants(gridVariants);
+    }
+
+    public void removeThemeVariants(GridVariant... gridVariants) {
+        treeGrid.removeThemeVariants(gridVariants);
     }
 }

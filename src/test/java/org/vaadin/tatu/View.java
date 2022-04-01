@@ -4,15 +4,20 @@ import java.util.Collections;
 import java.util.stream.Stream;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.NativeButton;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 
 @Route("")
-public class View extends Div {
+public class View extends Div implements AppShellConfigurator {
 
     public View() {
         DepartmentData departmentData = new DepartmentData();
@@ -42,14 +47,30 @@ public class View extends Div {
             if (event.getValue() != null)
                 System.out.println(event.getValue().getName() + " selected");
         });
+        tree.setHeightByRows(true);
 
         // end-source-example
         tree.setId("treegridbasic");
-        tree.setHeightByRows(true);
         setSizeFull();
-        add(withTreeToggleButtons(departmentData.getRootDepartments().get(0),
-                tree, message));
+        tree.addItemClickListener(event -> {
+            Notification.show("Click "+event.getItem().getName());
+        });
 
+        CheckboxGroup<GridVariant> variants = new CheckboxGroup<>();
+        variants.setItems(GridVariant.values());
+        variants.addValueChangeListener(event -> {
+            tree.removeThemeVariants(GridVariant.values());
+            variants.getValue().forEach(variant -> tree.addThemeVariants(variant));
+        });
+
+        TextField height = new TextField("Icon height");
+        height.addValueChangeListener(event -> {
+            tree.getElement().getStyle().set("--lumo-icon-size-m",event.getValue());
+        });
+
+        add(withTreeToggleButtons(departmentData.getRootDepartments().get(0),
+                tree, message, variants, height));
+        
         Tree<Department> treeWithoutIconSrcProvider = new Tree<>(
                 Department::getName);
         treeWithoutIconSrcProvider.setHeightByRows(true);
@@ -57,6 +78,14 @@ public class View extends Div {
                 departmentData::getChildDepartments);
         treeWithoutIconSrcProvider.setItemIconProvider(item -> getIcon(item));
         add(treeWithoutIconSrcProvider);
+        
+        Tree<Department> treeWithHtmlProvider = new Tree<>(
+                Department::getName);
+        treeWithHtmlProvider.setHeightByRows(true);
+        treeWithHtmlProvider.setItems(departmentData.getRootDepartments(),
+                departmentData::getChildDepartments);
+        treeWithHtmlProvider.setHtmlProvider(item -> "<b style=\"steelblue: red\">"+item.getName()+":</b> <i style=\"color: brown\">"+item.getManager()+"</i>");
+        add(treeWithHtmlProvider);
     }
 
     private StreamResource getImageIconSrc(Department item) {
@@ -108,4 +137,3 @@ public class View extends Div {
     }
 
 }
-
