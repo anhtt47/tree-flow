@@ -18,6 +18,7 @@ import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.HasSize;
+import com.vaadin.flow.component.HasTheme;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
@@ -29,6 +30,10 @@ import com.vaadin.flow.component.grid.GridSingleSelectionModel;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.ItemClickEvent;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
+import com.vaadin.flow.component.grid.dnd.GridDragEndEvent;
+import com.vaadin.flow.component.grid.dnd.GridDragStartEvent;
+import com.vaadin.flow.component.grid.dnd.GridDropEvent;
+import com.vaadin.flow.component.grid.dnd.GridDropMode;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.treegrid.CollapseEvent;
@@ -44,6 +49,7 @@ import com.vaadin.flow.data.selection.MultiSelect;
 import com.vaadin.flow.data.selection.SelectionListener;
 import com.vaadin.flow.data.selection.SelectionModel;
 import com.vaadin.flow.data.selection.SingleSelect;
+import com.vaadin.flow.dom.ThemeList;
 import com.vaadin.flow.function.SerializableComparator;
 import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.function.SerializablePredicate;
@@ -68,7 +74,7 @@ import com.vaadin.flow.shared.Registration;
 @CssImport(value = "./grid-tree-toggle-adjust.css", themeFor = "vaadin-grid-tree-toggle")
 public class Tree<T> extends Composite<Div>
         implements HasHierarchicalDataProvider<T>, Focusable, HasComponents,
-        HasSize, HasElement {
+        HasSize, HasElement, HasTheme {
 
     private class CustomizedTreeGrid<T> extends TreeGrid<T> {
         private final List<StreamRegistration> registrations = new ArrayList<>();
@@ -77,8 +83,10 @@ public class Tree<T> extends Composite<Div>
                 ValueProvider<T, ?> valueProvider) {
             Column<T> column = addColumn(TemplateRenderer
                     .<T> of("<vaadin-grid-tree-toggle "
+                            + "theme$='[[item.theme]]' "
                             + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
                             + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+                    .withProperty("theme", item -> getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
                     .withProperty("name", value -> String
@@ -95,8 +103,10 @@ public class Tree<T> extends Composite<Div>
                 ValueProvider<T, ?> valueProvider) {
             Column<T> column = addColumn(TemplateRenderer
                     .<T> of("<vaadin-grid-tree-toggle "
+                            + "theme$='[[item.theme]]' "
                             + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]' inner-h-t-m-l=\"[[item.html]]\">"
-                            + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+                            + "</vaadin-grid-tree-toggle>")
+                    .withProperty("theme", item -> Tree.this.getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
                     .withProperty("html", value -> sanitize(
@@ -115,10 +125,12 @@ public class Tree<T> extends Composite<Div>
                 ValueProvider<T, StreamResource> iconSrcProvider) {
             Column<T> column = addColumn(TemplateRenderer
                     .<T> of("<vaadin-grid-tree-toggle "
+                            + "theme$='[[item.theme]]' "
                             + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
                             + "<iron-icon style$='[[item.hasNoImage]] height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
                             + "<vaadin-icon style$='[[item.hasNoIcon]] padding-right: 10px' icon='[[item.icon]]'></vaadin-icon>"
                             + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+                    .withProperty("theme", item -> Tree.this.getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
                     .withProperty("icon",
@@ -152,8 +164,10 @@ public class Tree<T> extends Composite<Div>
                 ValueProvider<T, String> titleProvider) {
             Column<T> column = addColumn(TemplateRenderer
                     .<T> of("<vaadin-grid-tree-toggle title='[[item.title]]'"
+                            + "theme$='[[item.theme]]' "
                             + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
                             + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+                    .withProperty("theme", item -> Tree.this.getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
                     .withProperty("title",
@@ -786,16 +800,39 @@ public class Tree<T> extends Composite<Div>
         return mode;
     }
 
+    /**
+     * Gets the CSS class names for this component.
+     *
+     * @return a space-separated string of class names, or <code>null</code> if
+     *         there are no class names
+     */
     public String getClassName() {
         return treeGrid.getClassName();
     }
 
-    public void setClassName(String style) {
-        treeGrid.setClassName(style);
+    /**
+     * Sets the CSS class names of this component. This method overwrites any
+     * previous set class names.
+     *
+     * @param className
+     *            a space-separated string of class names to set, or
+     *            <code>null</code> to remove all class names
+     */
+    public void setClassName(String className) {
+        treeGrid.setClassName(className);
     }
 
-    public boolean removeClassName(String style) {
-        return treeGrid.removeClassName(style);
+    /**
+     * Removes a CSS class name from this component.
+     *
+     * @param className
+     *            the CSS class name to remove, not <code>null</code>
+     * @return <code>true</code> if the class name was removed,
+     *         <code>false</code> if the class list didn't contain the class
+     *         name
+     */
+    public boolean removeClassName(String className) {
+        return treeGrid.removeClassName(className);
     }
 
     @Override
@@ -875,6 +912,21 @@ public class Tree<T> extends Composite<Div>
         treeGrid.removeThemeVariants(gridVariants);
     }
 
+    @Override
+    public void setThemeName(String theme) {
+        treeGrid.setThemeName(theme);
+    }
+
+    @Override
+    public String getThemeName() {
+        return treeGrid.getElement().getAttribute("theme");
+    }
+
+    @Override 
+    public ThemeList getThemeNames() {
+        return treeGrid.getThemeNames();
+    }
+
     /**
      * By default html content is sanitized, if you have custom web components
      * to or other offending content that you want to render, set to false.
@@ -898,4 +950,103 @@ public class Tree<T> extends Composite<Div>
             return html;
         }
     }
- }
+ 
+    /**
+     * Sets the drop mode of this drop target. When set to not {@code null},
+     * tree fires drop events upon data drop over the tree or the tree rows.
+     * <p>
+     * When using {@link GridDropMode#ON_TOP}, and the tree is either empty or
+     * has empty space after the last row, the drop can still happen on the
+     * empty space, and the {@link GridDropEvent#getDropTargetItem()} will
+     * return an empty optional.
+     * <p>
+     * When using {@link GridDropMode#BETWEEN} or
+     * {@link GridDropMode#ON_TOP_OR_BETWEEN}, and there is at least one row in
+     * the tree, any drop after the last row in the tree will get the last row
+     * as the {@link GridDropEvent#getDropTargetItem()}. If there are no rows in
+     * the tree, then it will return an empty optional.
+     * <p>
+     * If using {@link GridDropMode#ON_GRID}, then the drop will not happen on
+     * any row, but instead just "on the tree". The target row will not be
+     * present in this case.
+     * <p>
+     * NOTE: Prefer not using a row specific GridDropMode with a
+     * tree that enables sorting. If for example a new row gets added to a
+     * specific location on drop event, it might not end up in the location of
+     * the drop but rather where the active sorting configuration prefers to
+     * place it. This behavior might feel unexpected for the users.
+     *
+     * @param dropMode
+     *            Drop mode that describes the allowed drop locations within the
+     *            Tree's row. Can be {@code null} to disable dropping on the
+     *            tree.
+     * @see GridDropEvent#getDropLocation()
+     */
+    public void setDropMode(GridDropMode dropMode) {
+        treeGrid.setDropMode(dropMode);
+    }
+
+    /**
+     * Gets the drop mode of this drop target.
+     *
+     * @return Drop mode that describes the allowed drop locations within the
+     *         Tree's row. {@code null} if dropping is not enabled.
+     */
+    public GridDropMode getDropMode() {
+        return treeGrid.getDropMode();
+    }
+
+    /**
+     * Sets whether the user can drag the tree rows or not.
+     *
+     * @param rowsDraggable
+     *            {@code true} if the rows can be dragged by the user;
+     *            {@code false} if not
+     */
+    public void setRowsDraggable(boolean rowsDraggable) {
+        treeGrid.setRowsDraggable(rowsDraggable);
+    }
+
+    /**
+     * Gets whether rows of the tree can be dragged.
+     *
+     * @return {@code true} if the rows are draggable, {@code false} otherwise
+     */
+
+    public boolean isRowsDraggable() {
+        return treeGrid.isRowsDraggable();
+    }
+
+    /**
+     * Adds a drag start listener to this component.
+     *
+     * @param listener
+     *            the listener to add, not <code>null</code>
+     * @return a handle that can be used for removing the listener
+     */
+    public Registration addDragStartListener(ComponentEventListener<GridDragStartEvent<T>> listener) {
+        return treeGrid.addDragStartListener(listener);
+    }
+
+    /**
+     * Adds a drop listener to this component.
+     *
+     * @param listener
+     *            the listener to add, not <code>null</code>
+     * @return a handle that can be used for removing the listener
+     */
+    public Registration addDropListener(ComponentEventListener<GridDropEvent<T>> listener) {
+        return treeGrid.addDropListener(listener);
+    }
+
+    /**
+     * Adds a drag end listener to this component.
+     *
+     * @param listener
+     *            the listener to add, not <code>null</code>
+     * @return a handle that can be used for removing the listener
+     */
+    public Registration addDragEndListener(ComponentEventListener<GridDragEndEvent<T>> listener) {
+        return treeGrid.addDragEndListener(listener);
+    }
+}
