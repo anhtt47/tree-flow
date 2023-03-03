@@ -34,7 +34,7 @@ public class View extends Div implements AppShellConfigurator {
 
         tree.setItemIconProvider(item -> getIcon(item));
         tree.setItemIconSrcProvider(item -> getImageIconSrc(item));
-        tree.setItemTitleProvider(Department::getManager);
+        tree.setItemTooltipProvider(Department::getManager);
 
         tree.addExpandListener(event -> message.setValue(
                 String.format("Expanded %s item(s)", event.getItems().size())
@@ -47,7 +47,7 @@ public class View extends Div implements AppShellConfigurator {
             if (event.getValue() != null)
                 System.out.println(event.getValue().getName() + " selected");
         });
-        tree.setHeightByRows(true);
+        tree.setAllRowsVisible(true);
 
         // end-source-example
         tree.setId("treegridbasic");
@@ -73,7 +73,7 @@ public class View extends Div implements AppShellConfigurator {
         
         Tree<Department> treeWithoutIconSrcProvider = new Tree<>(
                 Department::getName);
-        treeWithoutIconSrcProvider.setHeightByRows(true);
+        treeWithoutIconSrcProvider.setAllRowsVisible(true);
         treeWithoutIconSrcProvider.setItems(departmentData.getRootDepartments(),
                 departmentData::getChildDepartments);
         treeWithoutIconSrcProvider.setItemIconProvider(item -> getIcon(item));
@@ -81,7 +81,7 @@ public class View extends Div implements AppShellConfigurator {
         
         Tree<Department> treeWithHtmlProvider = new Tree<>(
                 Department::getName);
-        treeWithHtmlProvider.setHeightByRows(true);
+        treeWithHtmlProvider.setAllRowsVisible(true);
         treeWithHtmlProvider.setItems(departmentData.getRootDepartments(),
                 departmentData::getChildDepartments);
         treeWithHtmlProvider.setHtmlProvider(item -> "<b style=\"steelblue: red\">"+item.getName()+":</b> <i style=\"color: brown\">"+item.getManager()+"</i>");

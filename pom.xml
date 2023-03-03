@@ -3,21 +3,21 @@
 
     <groupId>org.vaadin.tatu</groupId>
     <artifactId>tree</artifactId>
-    <version>2.4.0</version>
+    <version>3.0.0</version>
     <name>tree</name>
-    <description>Integration of paper-slider for Vaadin platform</description>
+    <description>Tree component for Vaadin 24</description>
 
     <properties>
-        <vaadin.version>23.0.3</vaadin.version>
+        <vaadin.version>24.0.0.rc1</vaadin.version>
 
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <drivers.dir>${project.basedir}/drivers</drivers.dir>
 
-        <jetty.version>9.4.15.v20190215</jetty.version>
+        <jetty.version>11.0.14</jetty.version>
     </properties>
     <organization>
         <name>Tatu Lund</name>
@@ -76,35 +76,6 @@
             <groupId>com.vaadin</groupId>
             <!-- Replace artifactId with vaadin-core to use only free components -->
             <artifactId>vaadin-core</artifactId>
-            <exclusions>
-                <!-- Webjars are only needed when running in Vaadin 13 compatibility mode in V14.
-                     Your add-on can support npm in the same version mode and V13 compatiblity mode at the same time,
-                     or with separate versions. Any V13 version should work with the compatibility mode in V14. -->
-                <exclusion>
-                    <groupId>com.vaadin.webjar</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.webjars.bowergithub.insites</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.webjars.bowergithub.polymer</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.webjars.bowergithub.polymerelements</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.webjars.bowergithub.vaadin</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.webjars.bowergithub.webcomponents</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -117,9 +88,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>5.0.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 
 import org.jsoup.Jsoup;
@@ -39,12 +40,11 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.treegrid.CollapseEvent;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HasHierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
-import com.vaadin.flow.data.renderer.TemplateRenderer;
+import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.selection.MultiSelect;
 import com.vaadin.flow.data.selection.SelectionListener;
 import com.vaadin.flow.data.selection.SelectionModel;
@@ -81,16 +81,24 @@ public class Tree<T> extends Composite<Div>
 
         private Column<T> setHierarchyColumn(
                 ValueProvider<T, ?> valueProvider) {
-            Column<T> column = addColumn(TemplateRenderer
-                    .<T> of("<vaadin-grid-tree-toggle "
-                            + "theme$='[[item.theme]]' "
-                            + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                            + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+            Column<T> column = addColumn(LitRenderer
+                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} " + "theme=${item.theme} "
+                            + ".leaf=${item.leaf} .expanded=${model.expanded}' .level=${model.level}>"
+                            + "${item.name}" + "</vaadin-grid-tree-toggle>")
                     .withProperty("theme", item -> getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
-                    .withProperty("name", value -> String
-                            .valueOf(valueProvider.apply(value))));
+                    .withProperty("name",
+                            value -> String.valueOf(valueProvider.apply(value)))
+                    .withFunction("onClick", item -> {
+                        if (getDataCommunicator().hasChildren(item)) {
+                            if (isExpanded(item)) {
+                                collapse(List.of(item), true);
+                            } else {
+                                expand(List.of(item), true);
+                            }
+                        }
+                    }));
             final SerializableComparator<T> comparator = (a,
                     b) -> compareMaybeComparables(valueProvider.apply(a),
                             valueProvider.apply(b));
@@ -101,16 +109,25 @@ public class Tree<T> extends Composite<Div>
 
         private Column<T> setHierarchyColumnWithHtml(
                 ValueProvider<T, ?> valueProvider) {
-            Column<T> column = addColumn(TemplateRenderer
-                    .<T> of("<vaadin-grid-tree-toggle "
-                            + "theme$='[[item.theme]]' "
-                            + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]' inner-h-t-m-l=\"[[item.html]]\">"
+            Column<T> column = addColumn(LitRenderer
+                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} " + "theme=${item.theme} "
+                            + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level} .innerHTML=${item.html}>"
                             + "</vaadin-grid-tree-toggle>")
                     .withProperty("theme", item -> Tree.this.getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
-                    .withProperty("html", value -> sanitize(
-                            String.valueOf(valueProvider.apply(value)))));
+                    .withProperty("html",
+                            value -> sanitize(
+                                    String.valueOf(valueProvider.apply(value))))
+                    .withFunction("onClick", item -> {
+                        if (getDataCommunicator().hasChildren(item)) {
+                            if (isExpanded(item)) {
+                                collapse(List.of(item), true);
+                            } else {
+                                expand(List.of(item), true);
+                            }
+                        }
+                    }));
             final SerializableComparator<T> comparator = (a,
                     b) -> compareMaybeComparables(valueProvider.apply(a),
                             valueProvider.apply(b));
@@ -123,13 +140,12 @@ public class Tree<T> extends Composite<Div>
                 ValueProvider<T, ?> valueProvider,
                 ValueProvider<T, VaadinIcon> iconProvider,
                 ValueProvider<T, StreamResource> iconSrcProvider) {
-            Column<T> column = addColumn(TemplateRenderer
-                    .<T> of("<vaadin-grid-tree-toggle "
-                            + "theme$='[[item.theme]]' "
-                            + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                            + "<iron-icon style$='[[item.hasNoImage]] height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
-                            + "<vaadin-icon style$='[[item.hasNoIcon]] padding-right: 10px' icon='[[item.icon]]'></vaadin-icon>"
-                            + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+            Column<T> column = addColumn(LitRenderer
+                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} " + "theme=${item.theme} "
+                            + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
+                            + "<iron-icon style=${item.hasNoImage} height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src=${item.iconSrc}></iron-icon>"
+                            + "<vaadin-icon style='${item.hasNoIcon} padding-right: 10px' icon=${item.icon}></vaadin-icon>"
+                            + "${item.name}" + "</vaadin-grid-tree-toggle>")
                     .withProperty("theme", item -> Tree.this.getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
@@ -149,8 +165,17 @@ public class Tree<T> extends Composite<Div>
                                     || (getIconSrc(iconSrcProvider,
                                             icon) == null) ? "display : none;"
                                                     : null)
-                    .withProperty("name", value -> String
-                            .valueOf(valueProvider.apply(value))));
+                    .withProperty("name",
+                            value -> String.valueOf(valueProvider.apply(value)))
+                    .withFunction("onClick", item -> {
+                        if (getDataCommunicator().hasChildren(item)) {
+                            if (isExpanded(item)) {
+                                collapse(List.of(item), true);
+                            } else {
+                                expand(List.of(item), true);
+                            }
+                        }
+                    }));
             final SerializableComparator<T> comparator = (a,
                     b) -> compareMaybeComparables(valueProvider.apply(a),
                             valueProvider.apply(b));
@@ -159,67 +184,84 @@ public class Tree<T> extends Composite<Div>
             return column;
         }
 
-        private Column<T> setHierarchyColumnWithTitle(
+        private Column<T> setHierarchyColumnWithTooltip(
                 ValueProvider<T, ?> valueProvider,
-                ValueProvider<T, String> titleProvider) {
-            Column<T> column = addColumn(TemplateRenderer
-                    .<T> of("<vaadin-grid-tree-toggle title='[[item.title]]'"
-                            + "theme$='[[item.theme]]' "
-                            + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                            + "[[item.name]]" + "</vaadin-grid-tree-toggle>")
+                ValueProvider<T, String> tooltipProvider) {
+            Column<T> column = addColumn(LitRenderer
+                    .<T> of("<vaadin-grid-tree-toggle id=${item.key} @click=${onClick} "
+                            + "theme=${item.theme} "
+                            + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
+                            + "${item.name}" + "<vaadin-tooltip for=${item.key} text=${item.tooltip}></vaadin-tooltip></vaadin-grid-tree-toggle>")
+                    .withProperty("key", item -> randomId("tooltip",10))
                     .withProperty("theme", item -> Tree.this.getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
-                    .withProperty("title",
-                            title -> String.valueOf(titleProvider.apply(title)))
-                    .withProperty("name", value -> String
-                            .valueOf(valueProvider.apply(value))));
+                    .withProperty("tooltip",
+                            tooltip -> String.valueOf(tooltipProvider.apply(tooltip)))
+                    .withProperty("name",
+                            value -> String.valueOf(valueProvider.apply(value)))
+                    .withFunction("onClick", item -> {
+                        if (getDataCommunicator().hasChildren(item)) {
+                            if (isExpanded(item)) {
+                                collapse(List.of(item), true);
+                            } else {
+                                expand(List.of(item), true);
+                            }
+                        }
+                    }));
             final SerializableComparator<T> comparator = (a,
                     b) -> compareMaybeComparables(valueProvider.apply(a),
                             valueProvider.apply(b));
             column.setComparator(comparator);
 
             return column;
+        }
+
+        private String randomId(String prefix, int chars) {
+            int limit = (10 * chars) - 1;
+            String key = "" + rand.nextInt(limit);
+            key = String.format("%" + chars + "s", key).replace(' ', '0');
+            return prefix + "-" + key;
         }
 
         public Column<T> setHierarchyColumn(ValueProvider<T, ?> valueProvider,
                 ValueProvider<T, VaadinIcon> iconProvider,
-                ValueProvider<T, String> titleProvider) {
+                ValueProvider<T, String> tooltipProvider) {
             return setHierarchyColumn(valueProvider, iconProvider, null,
-                    titleProvider);
+                    tooltipProvider);
         }
 
         public Column<T> setHierarchyColumn(ValueProvider<T, ?> valueProvider,
                 ValueProvider<T, VaadinIcon> iconProvider,
                 ValueProvider<T, StreamResource> iconSrcProvider,
-                ValueProvider<T, String> titleProvider) {
+                ValueProvider<T, String> tooltipProvider) {
             removeAllColumns();
             Column<T> column;
             if ((iconProvider == null && iconSrcProvider == null)
-                    && (titleProvider == null)) {
+                    && (tooltipProvider == null)) {
                 column = setHierarchyColumn(valueProvider);
             } else if ((iconProvider != null || iconSrcProvider != null)
-                    && (titleProvider == null)) {
+                    && (tooltipProvider == null)) {
                 column = setHierarchyColumnWithIcon(valueProvider, iconProvider,
                         iconSrcProvider);
             } else if ((iconProvider == null && iconSrcProvider == null)
-                    && (titleProvider != null)) {
-                column = setHierarchyColumnWithTitle(valueProvider,
-                        titleProvider);
+                    && (tooltipProvider != null)) {
+                column = setHierarchyColumnWithTooltip(valueProvider,
+                        tooltipProvider);
             } else {
-                column = addColumn(TemplateRenderer.<T> of(
-                        "<vaadin-grid-tree-toggle title='[[item.title]]'"
-                                + "leaf='[[item.leaf]]' expanded='{{expanded}}' level='[[level]]'>"
-                                + "<iron-icon style$='[[item.hasNoImage]] height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src='[[item.iconSrc]]'></iron-icon>"
-                                + "<vaadin-icon style$='[[item.hasNoIcon]] padding-right: 10px' icon='[[item.icon]]'></vaadin-icon>"
-                                + "[[item.name]]"
-                                + "</vaadin-grid-tree-toggle>")
+                column = addColumn(LitRenderer
+                        .<T> of("<vaadin-grid-tree-toggle id=${item.key} @click=${onClick} "
+                                + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
+                                + "<iron-icon style=${item.hasNoImage} height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src=${item.iconSrc}></iron-icon>"
+                                + "<vaadin-icon style='${item.hasNoIcon} padding-right: 10px' icon=${item.icon}></vaadin-icon>"
+                                + "${item.name}" + "<vaadin-tooltip for=${item.key} text=${item.tooltip}></vaadin-tooltip></vaadin-grid-tree-toggle>")
+                        .withProperty("key", item -> randomId("tooltip",10))
                         .withProperty("leaf",
                                 item -> !getDataCommunicator()
                                         .hasChildren(item))
-                        .withProperty("title",
-                                title -> String
-                                        .valueOf(titleProvider.apply(title)))
+                        .withProperty("tooltip",
+                                tooltip -> String
+                                        .valueOf(tooltipProvider.apply(tooltip)))
                         .withProperty("icon",
                                 icon -> iconProvider == null ? null
                                         : getIcon(iconProvider, icon))
@@ -237,8 +279,18 @@ public class Tree<T> extends Composite<Div>
                                                 icon) == null)
                                                         ? "display : none;"
                                                         : null)
-                        .withProperty("name", value -> String
-                                .valueOf(valueProvider.apply(value))));
+                        .withProperty("name",
+                                value -> String
+                                        .valueOf(valueProvider.apply(value)))
+                        .withFunction("onClick", item -> {
+                            if (getDataCommunicator().hasChildren(item)) {
+                                if (isExpanded(item)) {
+                                    collapse(List.of(item), true);
+                                } else {
+                                    expand(List.of(item), true);
+                                }
+                            }
+                        }));
                 final SerializableComparator<T> comparator = (a,
                         b) -> compareMaybeComparables(valueProvider.apply(a),
                                 valueProvider.apply(b));
@@ -301,8 +353,9 @@ public class Tree<T> extends Composite<Div>
     private ValueProvider<T, VaadinIcon> iconProvider;
     private ValueProvider<T, StreamResource> iconSrcProvider;
     private ValueProvider<T, ?> valueProvider;
-    private ValueProvider<T, String> titleProvider;
+    private ValueProvider<T, String> tooltipProvider;
     private boolean sanitize = true;
+    private Random rand = new Random();
 
     /**
      * Constructs a new Tree Component.
@@ -313,7 +366,7 @@ public class Tree<T> extends Composite<Div>
     public Tree(ValueProvider<T, ?> valueProvider) {
         this.valueProvider = valueProvider;
         treeGrid.setHierarchyColumn(valueProvider, iconProvider,
-                iconSrcProvider, titleProvider);
+                iconSrcProvider, tooltipProvider);
         treeGrid.setSelectionMode(SelectionMode.SINGLE);
         treeGrid.addThemeVariants(GridVariant.LUMO_NO_ROW_BORDERS);
 
@@ -353,11 +406,6 @@ public class Tree<T> extends Composite<Div>
     @Override
     public HierarchicalDataProvider<T, SerializablePredicate<T>> getDataProvider() {
         return treeGrid.getDataProvider();
-    }
-
-    @Override
-    public void setDataProvider(DataProvider<T, ?> dataProvider) {
-        treeGrid.setDataProvider(dataProvider);
     }
 
     /**
@@ -606,10 +654,9 @@ public class Tree<T> extends Composite<Div>
 
     /**
      * Sets the item generator that is used to produce the html content shown
-     * for each item. By default, {@link String#valueOf(Object)} is
-     * used.
+     * for each item. By default, {@link String#valueOf(Object)} is used.
      * <p>
-     * Note: This will override icon, title and value provider settings.
+     * Note: This will override icon, tooltip and value provider settings.
      *
      * @param htmlProvider
      *            the item html provider to use, not <code>null</code>
@@ -635,7 +682,7 @@ public class Tree<T> extends Composite<Div>
                 "Caption generator must not be null");
         this.valueProvider = valueProvider;
         treeGrid.setHierarchyColumn(valueProvider, iconProvider,
-                iconSrcProvider, titleProvider);
+                iconSrcProvider, tooltipProvider);
         treeGrid.getDataCommunicator().reset();
     }
 
@@ -653,7 +700,7 @@ public class Tree<T> extends Composite<Div>
                 "Item icon generator must not be null");
         this.iconProvider = iconProvider;
         treeGrid.setHierarchyColumn(valueProvider, iconProvider,
-                iconSrcProvider, titleProvider);
+                iconSrcProvider, tooltipProvider);
         treeGrid.getDataCommunicator().reset();
     }
 
@@ -672,7 +719,7 @@ public class Tree<T> extends Composite<Div>
                 "Item icon src generator must not be null");
         this.iconSrcProvider = iconSrcProvider;
         treeGrid.setHierarchyColumn(valueProvider, iconProvider,
-                iconSrcProvider, titleProvider);
+                iconSrcProvider, tooltipProvider);
         treeGrid.getDataCommunicator().reset();
     }
 
@@ -692,17 +739,17 @@ public class Tree<T> extends Composite<Div>
     }
 
     /**
-     * Sets the title generator that is used for generating tooltip descriptions
+     * Sets the tooltip generator that is used for generating tooltip descriptions
      * for items.
      *
-     * @param titleProvider
+     * @param tooltipProvider
      *            the item description generator to set, or <code>null</code> to
      *            remove a previously set generator
      */
-    public void setItemTitleProvider(ValueProvider<T, String> titleProvider) {
-        this.titleProvider = titleProvider;
+    public void setItemTooltipProvider(ValueProvider<T, String> tooltipProvider) {
+        this.tooltipProvider = tooltipProvider;
         treeGrid.setHierarchyColumn(valueProvider, iconProvider,
-                iconSrcProvider, titleProvider);
+                iconSrcProvider, tooltipProvider);
         treeGrid.getDataCommunicator().reset();
     }
 
@@ -747,8 +794,8 @@ public class Tree<T> extends Composite<Div>
      *
      * @return the item description generator
      */
-    public ValueProvider<T, String> getTitleProvider() {
-        return titleProvider;
+    public ValueProvider<T, String> getTooltipProvider() {
+        return tooltipProvider;
     }
 
     /**
@@ -895,8 +942,8 @@ public class Tree<T> extends Composite<Div>
                 treeGrid.getElement());
     }
 
-    public void setHeightByRows(boolean heightByRows) {
-        treeGrid.setHeightByRows(heightByRows);
+    public void setAllRowsVisible(boolean heightByRows) {
+        treeGrid.setAllRowsVisible(heightByRows);
     }
 
     @Override
@@ -922,7 +969,7 @@ public class Tree<T> extends Composite<Div>
         return treeGrid.getElement().getAttribute("theme");
     }
 
-    @Override 
+    @Override
     public ThemeList getThemeNames() {
         return treeGrid.getThemeNames();
     }
@@ -940,17 +987,17 @@ public class Tree<T> extends Composite<Div>
 
     private String sanitize(String html) {
         if (sanitize) {
-        Safelist safelist = Safelist.relaxed()
-                .addAttributes(":all", "style")
-                .addEnforcedAttribute("a", "rel", "nofollow");
-        String sanitized = Jsoup.clean(html, "", safelist,
-                new Document.OutputSettings().prettyPrint(false));
-        return sanitized;
+            Safelist safelist = Safelist.relaxed()
+                    .addAttributes(":all", "style")
+                    .addEnforcedAttribute("a", "rel", "nofollow");
+            String sanitized = Jsoup.clean(html, "", safelist,
+                    new Document.OutputSettings().prettyPrint(false));
+            return sanitized;
         } else {
             return html;
         }
     }
- 
+
     /**
      * Sets the drop mode of this drop target. When set to not {@code null},
      * tree fires drop events upon data drop over the tree or the tree rows.
@@ -970,11 +1017,11 @@ public class Tree<T> extends Composite<Div>
      * any row, but instead just "on the tree". The target row will not be
      * present in this case.
      * <p>
-     * NOTE: Prefer not using a row specific GridDropMode with a
-     * tree that enables sorting. If for example a new row gets added to a
-     * specific location on drop event, it might not end up in the location of
-     * the drop but rather where the active sorting configuration prefers to
-     * place it. This behavior might feel unexpected for the users.
+     * NOTE: Prefer not using a row specific GridDropMode with a tree that
+     * enables sorting. If for example a new row gets added to a specific
+     * location on drop event, it might not end up in the location of the drop
+     * but rather where the active sorting configuration prefers to place it.
+     * This behavior might feel unexpected for the users.
      *
      * @param dropMode
      *            Drop mode that describes the allowed drop locations within the
@@ -1024,7 +1071,8 @@ public class Tree<T> extends Composite<Div>
      *            the listener to add, not <code>null</code>
      * @return a handle that can be used for removing the listener
      */
-    public Registration addDragStartListener(ComponentEventListener<GridDragStartEvent<T>> listener) {
+    public Registration addDragStartListener(
+            ComponentEventListener<GridDragStartEvent<T>> listener) {
         return treeGrid.addDragStartListener(listener);
     }
 
@@ -1035,7 +1083,8 @@ public class Tree<T> extends Composite<Div>
      *            the listener to add, not <code>null</code>
      * @return a handle that can be used for removing the listener
      */
-    public Registration addDropListener(ComponentEventListener<GridDropEvent<T>> listener) {
+    public Registration addDropListener(
+            ComponentEventListener<GridDropEvent<T>> listener) {
         return treeGrid.addDropListener(listener);
     }
 
@@ -1046,7 +1095,8 @@ public class Tree<T> extends Composite<Div>
      *            the listener to add, not <code>null</code>
      * @return a handle that can be used for removing the listener
      */
-    public Registration addDragEndListener(ComponentEventListener<GridDragEndEvent<T>> listener) {
+    public Registration addDragEndListener(
+            ComponentEventListener<GridDragEndEvent<T>> listener) {
         return treeGrid.addDragEndListener(listener);
     }
 }

@@ -3,43 +3,17 @@
 
 # Tree
 
-Vaadin 21 Java version of Tree component
+Vaadin 24 Java version of Tree component
 
 ## Release notes
 
-### Version 2.3.1
+### Version 3.0.0
 
-- Add setSanitize method to disable html sanitation
-
-### Version 2.3.0
-
-- Tested with Vaadin 23
-- Control icon size by --lumo-icon-size-m custom property
-- Added htmlProvider
-- Fixed removeClassName
-- Added addThemeVariants / removeThemeVariants
-- Toggle expand/collapse only with button
-
-### Version 2.2.2
-
-- Fixed styling
-
-### Version 2.2.1
-
-- Fixed regression due previous change, Images stopped working
-
-### Version 2.2.0
-
-- Fix broken VaadinIcon support due change in Vaadin 21
-
-### Version 2.1.0
-
-- Support Images as icons
-
-### Version 2.0.0
-
-- Initial version
-
+- Feature set is derived from version 2.4.0, but adopted for Vaadin 24
+- Instead of title attribute vaadin-tooltip used for tooltips
+- setTitleProvider renamed to setTooltipProvider
+- getTitleProvider renamed to getTooltipProvider
+- setHeightByRows renamed to setAllRowsVisible
 
 ## Development instructions
 
