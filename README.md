@@ -7,6 +7,10 @@ Vaadin 24 Java version of Tree component
 
 ## Release notes
 
+### Version 3.0.1
+
+- Small fix in icon rendering
+
 ### Version 3.0.0
 
 - Feature set is derived from version 2.4.0, but adopted for Vaadin 24
