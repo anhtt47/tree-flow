@@ -83,7 +83,7 @@ public class Tree<T> extends Composite<Div>
                 ValueProvider<T, ?> valueProvider) {
             Column<T> column = addColumn(LitRenderer
                     .<T> of("<vaadin-grid-tree-toggle @click=${onClick} " + "theme=${item.theme} "
-                            + ".leaf=${item.leaf} .expanded=${model.expanded}' .level=${model.level}>"
+                            + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
                             + "${item.name}" + "</vaadin-grid-tree-toggle>")
                     .withProperty("theme", item -> getThemeName())
                     .withProperty("leaf",
