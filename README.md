@@ -7,6 +7,10 @@ Vaadin 24 Java version of Tree component
 
 ## Release notes
 
+### Version 3.1.0
+
+- Add getDataCommunicator pass thru API
+
 ### Version 3.0.1
 
 - Small fix in icon rendering

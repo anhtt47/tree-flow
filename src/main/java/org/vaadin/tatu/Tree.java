@@ -41,6 +41,7 @@ import com.vaadin.flow.component.treegrid.CollapseEvent;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.HasHierarchicalDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataCommunicator;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
@@ -82,7 +83,8 @@ public class Tree<T> extends Composite<Div>
         private Column<T> setHierarchyColumn(
                 ValueProvider<T, ?> valueProvider) {
             Column<T> column = addColumn(LitRenderer
-                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} " + "theme=${item.theme} "
+                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} "
+                            + "theme=${item.theme} "
                             + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
                             + "${item.name}" + "</vaadin-grid-tree-toggle>")
                     .withProperty("theme", item -> getThemeName())
@@ -110,7 +112,8 @@ public class Tree<T> extends Composite<Div>
         private Column<T> setHierarchyColumnWithHtml(
                 ValueProvider<T, ?> valueProvider) {
             Column<T> column = addColumn(LitRenderer
-                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} " + "theme=${item.theme} "
+                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} "
+                            + "theme=${item.theme} "
                             + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level} .innerHTML=${item.html}>"
                             + "</vaadin-grid-tree-toggle>")
                     .withProperty("theme", item -> Tree.this.getThemeName())
@@ -141,7 +144,8 @@ public class Tree<T> extends Composite<Div>
                 ValueProvider<T, VaadinIcon> iconProvider,
                 ValueProvider<T, StreamResource> iconSrcProvider) {
             Column<T> column = addColumn(LitRenderer
-                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} " + "theme=${item.theme} "
+                    .<T> of("<vaadin-grid-tree-toggle @click=${onClick} "
+                            + "theme=${item.theme} "
                             + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
                             + "<iron-icon style=${item.hasNoImage} height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src=${item.iconSrc}></iron-icon>"
                             + "<vaadin-icon style='${item.hasNoIcon} padding-right: 10px' icon=${item.icon}></vaadin-icon>"
@@ -187,17 +191,19 @@ public class Tree<T> extends Composite<Div>
         private Column<T> setHierarchyColumnWithTooltip(
                 ValueProvider<T, ?> valueProvider,
                 ValueProvider<T, String> tooltipProvider) {
-            Column<T> column = addColumn(LitRenderer
-                    .<T> of("<vaadin-grid-tree-toggle id=${item.key} @click=${onClick} "
+            Column<T> column = addColumn(LitRenderer.<T> of(
+                    "<vaadin-grid-tree-toggle id=${item.key} @click=${onClick} "
                             + "theme=${item.theme} "
                             + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
-                            + "${item.name}" + "<vaadin-tooltip for=${item.key} text=${item.tooltip}></vaadin-tooltip></vaadin-grid-tree-toggle>")
-                    .withProperty("key", item -> randomId("tooltip",10))
+                            + "${item.name}"
+                            + "<vaadin-tooltip for=${item.key} text=${item.tooltip}></vaadin-tooltip></vaadin-grid-tree-toggle>")
+                    .withProperty("key", item -> randomId("tooltip", 10))
                     .withProperty("theme", item -> Tree.this.getThemeName())
                     .withProperty("leaf",
                             item -> !getDataCommunicator().hasChildren(item))
                     .withProperty("tooltip",
-                            tooltip -> String.valueOf(tooltipProvider.apply(tooltip)))
+                            tooltip -> String
+                                    .valueOf(tooltipProvider.apply(tooltip)))
                     .withProperty("name",
                             value -> String.valueOf(valueProvider.apply(value)))
                     .withFunction("onClick", item -> {
@@ -249,19 +255,20 @@ public class Tree<T> extends Composite<Div>
                 column = setHierarchyColumnWithTooltip(valueProvider,
                         tooltipProvider);
             } else {
-                column = addColumn(LitRenderer
-                        .<T> of("<vaadin-grid-tree-toggle id=${item.key} @click=${onClick} "
+                column = addColumn(LitRenderer.<T> of(
+                        "<vaadin-grid-tree-toggle id=${item.key} @click=${onClick} "
                                 + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
                                 + "<iron-icon style=${item.hasNoImage} height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src=${item.iconSrc}></iron-icon>"
                                 + "<vaadin-icon style='${item.hasNoIcon} padding-right: 10px' icon=${item.icon}></vaadin-icon>"
-                                + "${item.name}" + "<vaadin-tooltip for=${item.key} text=${item.tooltip}></vaadin-tooltip></vaadin-grid-tree-toggle>")
-                        .withProperty("key", item -> randomId("tooltip",10))
+                                + "${item.name}"
+                                + "<vaadin-tooltip for=${item.key} text=${item.tooltip}></vaadin-tooltip></vaadin-grid-tree-toggle>")
+                        .withProperty("key", item -> randomId("tooltip", 10))
                         .withProperty("leaf",
                                 item -> !getDataCommunicator()
                                         .hasChildren(item))
                         .withProperty("tooltip",
-                                tooltip -> String
-                                        .valueOf(tooltipProvider.apply(tooltip)))
+                                tooltip -> String.valueOf(
+                                        tooltipProvider.apply(tooltip)))
                         .withProperty("icon",
                                 icon -> iconProvider == null ? null
                                         : getIcon(iconProvider, icon))
@@ -739,14 +746,15 @@ public class Tree<T> extends Composite<Div>
     }
 
     /**
-     * Sets the tooltip generator that is used for generating tooltip descriptions
-     * for items.
+     * Sets the tooltip generator that is used for generating tooltip
+     * descriptions for items.
      *
      * @param tooltipProvider
      *            the item description generator to set, or <code>null</code> to
      *            remove a previously set generator
      */
-    public void setItemTooltipProvider(ValueProvider<T, String> tooltipProvider) {
+    public void setItemTooltipProvider(
+            ValueProvider<T, String> tooltipProvider) {
         this.tooltipProvider = tooltipProvider;
         treeGrid.setHierarchyColumn(valueProvider, iconProvider,
                 iconSrcProvider, tooltipProvider);
@@ -1099,4 +1107,14 @@ public class Tree<T> extends Composite<Div>
             ComponentEventListener<GridDragEndEvent<T>> listener) {
         return treeGrid.addDragEndListener(listener);
     }
+
+    /**
+     * Returns the data communicator of this Grid.
+     * 
+     * @return HierarchicalDataCommunicator
+     */
+    public HierarchicalDataCommunicator<T> getDataCommunicator() {
+        return treeGrid.getDataCommunicator();
+    }
+
 }
