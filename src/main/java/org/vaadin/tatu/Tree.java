@@ -2,17 +2,20 @@ package org.vaadin.tatu;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Focusable;
@@ -21,13 +24,9 @@ import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.HasTheme;
 import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.dependency.JsModule;
-import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
-import com.vaadin.flow.component.grid.GridMultiSelectionModel;
 import com.vaadin.flow.component.grid.GridSelectionModel;
-import com.vaadin.flow.component.grid.GridSingleSelectionModel;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.grid.ItemClickEvent;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
@@ -47,7 +46,6 @@ import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.data.selection.MultiSelect;
-import com.vaadin.flow.data.selection.SelectionListener;
 import com.vaadin.flow.data.selection.SelectionModel;
 import com.vaadin.flow.data.selection.SingleSelect;
 import com.vaadin.flow.dom.ThemeList;
@@ -70,8 +68,6 @@ import com.vaadin.flow.shared.Registration;
  * @param <T>
  *            the data type
  */
-@NpmPackage(value = "@polymer/iron-icon", version = "3.0.1")
-@JsModule("@polymer/iron-icon/iron-icon.js")
 @CssImport(value = "./grid-tree-toggle-adjust.css", themeFor = "vaadin-grid-tree-toggle")
 public class Tree<T> extends Composite<Div>
         implements HasHierarchicalDataProvider<T>, Focusable, HasComponents,
@@ -147,7 +143,7 @@ public class Tree<T> extends Composite<Div>
                     .<T> of("<vaadin-grid-tree-toggle @click=${onClick} "
                             + "theme=${item.theme} "
                             + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
-                            + "<iron-icon style=${item.hasNoImage} height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src=${item.iconSrc}></iron-icon>"
+                            + "<vaadin-icon style=${item.hasNoImage} padding-right: 10px' src=${item.iconSrc}></vaadin-icon>"
                             + "<vaadin-icon style='${item.hasNoIcon} padding-right: 10px' icon=${item.icon}></vaadin-icon>"
                             + "${item.name}" + "</vaadin-grid-tree-toggle>")
                     .withProperty("theme", item -> Tree.this.getThemeName())
@@ -224,7 +220,7 @@ public class Tree<T> extends Composite<Div>
         }
 
         private String randomId(String prefix, int chars) {
-            int limit = (10 * chars) - 1;
+            int limit = (int) (Math.pow(10, chars) - 1);
             String key = "" + rand.nextInt(limit);
             key = String.format("%" + chars + "s", key).replace(' ', '0');
             return prefix + "-" + key;
@@ -258,7 +254,7 @@ public class Tree<T> extends Composite<Div>
                 column = addColumn(LitRenderer.<T> of(
                         "<vaadin-grid-tree-toggle id=${item.key} @click=${onClick} "
                                 + ".leaf=${item.leaf} .expanded=${model.expanded} .level=${model.level}>"
-                                + "<iron-icon style=${item.hasNoImage} height: var(--lumo-icon-size-m, 15px); padding-right: 10px' src=${item.iconSrc}></iron-icon>"
+                                + "<vaadin-icon style='${item.hasNoImage} padding-right: 10px' src=${item.iconSrc}></vaadin-icon>"
                                 + "<vaadin-icon style='${item.hasNoIcon} padding-right: 10px' icon=${item.icon}></vaadin-icon>"
                                 + "${item.name}"
                                 + "<vaadin-tooltip for=${item.key} text=${item.tooltip}></vaadin-tooltip></vaadin-grid-tree-toggle>")
@@ -363,6 +359,9 @@ public class Tree<T> extends Composite<Div>
     private ValueProvider<T, String> tooltipProvider;
     private boolean sanitize = true;
     private Random rand = new Random();
+    private boolean selectOnlyLeafs;
+    private SelectionMode selectionMode;
+    private T oldValue;
 
     /**
      * Constructs a new Tree Component.
@@ -374,11 +373,59 @@ public class Tree<T> extends Composite<Div>
         this.valueProvider = valueProvider;
         treeGrid.setHierarchyColumn(valueProvider, iconProvider,
                 iconSrcProvider, tooltipProvider);
-        treeGrid.setSelectionMode(SelectionMode.SINGLE);
+        setSelectionMode(SelectionMode.SINGLE);
         treeGrid.addThemeVariants(GridVariant.LUMO_NO_ROW_BORDERS);
 
         treeGrid.setSizeFull();
         treeGrid.addClassName("tree");
+        treeGrid.addSelectionListener(e -> {
+            Set<T> value = Collections.emptySet();
+            T item = oldValue;
+            if (selectOnlyLeafs) {
+                if (selectionMode == SelectionMode.MULTI) {
+                    value = e.getAllSelectedItems().stream().filter(
+                            i -> !treeGrid.getDataCommunicator().hasChildren(i))
+                            .collect(Collectors.toSet());
+                    boolean fireEvent = (value.size() == e.getAllSelectedItems()
+                            .size());
+                    treeGrid.deselectAll();
+                    value.forEach(i -> treeGrid.select(i));
+                    if (fireEvent) {
+                        fireEvent(new SelectionChangedEvent<>(this, value,
+                                e.isFromClient()));
+                    }
+                } else if (e.getFirstSelectedItem().isPresent()) {
+                    item = !treeGrid.getDataCommunicator()
+                            .hasChildren(e.getFirstSelectedItem().get())
+                                    ? e.getFirstSelectedItem().get()
+                                    : null;
+                    if (item == null) {
+                        treeGrid.select(oldValue);
+                    } else {
+                        value = Set.of(item);
+                        oldValue = item;
+                        if (e.isFromClient()) {
+                            fireEvent(new SelectionChangedEvent<>(this, value,
+                                    e.isFromClient()));
+                        }
+                    }
+                } else {
+                    fireEvent(new SelectionChangedEvent<>(this, value,
+                            e.isFromClient()));                    
+                }
+            } else {
+                if (selectionMode == SelectionMode.MULTI) {
+                    value = e.getAllSelectedItems().stream()
+                            .collect(Collectors.toSet());
+                } else if (e.getFirstSelectedItem().isPresent()) {
+                    item = e.getFirstSelectedItem().get();
+                    oldValue = item;
+                    value = Set.of(item);
+                }
+                fireEvent(new SelectionChangedEvent<>(this, value,
+                        e.isFromClient()));
+            }
+        });
         add(treeGrid);
     }
 
@@ -591,7 +638,12 @@ public class Tree<T> extends Composite<Div>
      * @see #getSelectionModel()
      */
     public void select(T item) {
+        boolean changed = !treeGrid.getSelectedItems().contains(item);
         treeGrid.select(item);
+        if (changed) {
+            fireEvent(new SelectionChangedEvent<>(this,
+                    treeGrid.getSelectedItems(), false));
+        }
     }
 
     /**
@@ -605,7 +657,12 @@ public class Tree<T> extends Composite<Div>
      * @see #getSelectionModel()
      */
     public void deselect(T item) {
+        boolean changed = treeGrid.getSelectedItems().contains(item);
         treeGrid.deselect(item);
+        if (changed) {
+            fireEvent(new SelectionChangedEvent<>(this,
+                    treeGrid.getSelectedItems(), false));
+        }
     }
 
     /**
@@ -624,8 +681,10 @@ public class Tree<T> extends Composite<Div>
      *             {@link SelectionMode#NONE}
      */
     public Registration addSelectionListener(
-            SelectionListener<Grid<T>, T> listener) {
-        return treeGrid.addSelectionListener(listener);
+            ComponentEventListener<SelectionChangedEvent<T, Tree<T>>> listener) {
+        Objects.requireNonNull(listener, "listener cannot be null");
+        return ComponentUtil.addListener(this, SelectionChangedEvent.class,
+                (ComponentEventListener) listener);
     }
 
     /**
@@ -838,21 +897,8 @@ public class Tree<T> extends Composite<Div>
     public GridSelectionModel<T> setSelectionMode(SelectionMode selectionMode) {
         Objects.requireNonNull(selectionMode,
                 "Can not set selection mode to null");
+        this.selectionMode = selectionMode;
         return treeGrid.setSelectionMode(selectionMode);
-    }
-
-    private SelectionMode getSelectionMode() {
-        GridSelectionModel<T> selectionModel = getSelectionModel();
-        SelectionMode mode = null;
-        if (selectionModel.getClass().equals(GridSingleSelectionModel.class)) {
-            mode = SelectionMode.SINGLE;
-        } else if (selectionModel.getClass()
-                .equals(GridMultiSelectionModel.class)) {
-            mode = SelectionMode.MULTI;
-        } else {
-            mode = SelectionMode.NONE;
-        }
-        return mode;
     }
 
     /**
@@ -946,7 +992,7 @@ public class Tree<T> extends Composite<Div>
     @Override
     public void focus() {
         treeGrid.getElement().executeJs(
-                "setTimeout(function(){let firstTd = $0.shadowRoot.querySelector('tr:first-child > td:first-child'); firstTd.click(); firstTd.focus(); },0)",
+                "setTimeout(function(){let firstTd = $0.shadowRoot.querySelector('tr:first-child > td:first-child'); firstTd.focus(); },0)",
                 treeGrid.getElement());
     }
 
@@ -1117,4 +1163,16 @@ public class Tree<T> extends Composite<Div>
         return treeGrid.getDataCommunicator();
     }
 
+    /**
+     * When true, only selecting leafs is accepted. Also SelectionChangedEvent
+     * is not fired if non-leaf node is clicked.
+     * <p>
+     * Note: asSingleSelect and asMultiSelect pass thru API's are not affected.
+     * 
+     * @param selectOnlyLeafs
+     *            boolean value.
+     */
+    public void setSelectOnlyLeafs(boolean selectOnlyLeafs) {
+        this.selectOnlyLeafs = selectOnlyLeafs;
+    }
 }

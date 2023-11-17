@@ -7,6 +7,12 @@ Vaadin 24 Java version of Tree component
 
 ## Release notes
 
+### Version 3.2.0
+
+- Add setSelectOnlyLeafs 
+- Removed iron-icon use, as vaadin-icon supports Image icons from Vaadin 24.2+
+- Vaadin 24.2+ required
+
 ### Version 3.1.0
 
 - Add getDataCommunicator pass thru API
