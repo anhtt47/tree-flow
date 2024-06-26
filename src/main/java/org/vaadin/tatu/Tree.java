@@ -1183,4 +1183,33 @@ public class Tree<T> extends Composite<Div>
     public void setSelectOnlyLeafs(boolean selectOnlyLeafs) {
         this.selectOnlyLeafs = selectOnlyLeafs;
     }
+
+    public void workaroundLostSelectedRoot(boolean isSelectedRoot){
+        if (isSelectedRoot){
+            treeGrid.getElement().executeJs(
+                    """
+                                setTimeout(function(){
+                                    let firstTd = $0.shadowRoot.querySelector('tr:first-child > td:first-child');
+                                    //console.log("firstTd: " + firstTd);
+                                    if (firstTd){
+                                        let cellContent = firstTd.querySelector('slot[name="vaadin-grid-cell-content-6"]');
+                                        //console.log("cellContent: " + cellContent);
+                                        if (cellContent){
+                                            let assignedNodes = cellContent.assignedNodes();
+                                            //console.log("assignedNodes: " + assignedNodes);
+                                            assignedNodes.forEach(node => {
+                                                              if (node.nodeType === Node.ELEMENT_NODE) {
+                                                                  let vaadinCheckbox = node.querySelector('vaadin-checkbox');
+                                                                  //console.log("vaadinCheckbox: " + vaadinCheckbox);
+                                                                  if (vaadinCheckbox) {
+                                                                      vaadinCheckbox.checked = true;
+                                                                  }
+                                                              }
+                                                          });
+                                        }
+                                    }
+                                    },0);
+                              """, treeGrid.getElement());
+        }
+    }
 }

@@ -3,7 +3,7 @@
 
     <groupId>org.vaadin.tatu</groupId>
     <artifactId>FINEX-tree</artifactId>
-    <version>3.2.0</version>
+    <version>3.2.1</version>
     <name>FINEX-tree</name>
     <description>Tree component for Vaadin 24</description>
 
