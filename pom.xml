@@ -2,13 +2,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.vaadin.tatu</groupId>
-    <artifactId>tree</artifactId>
+    <artifactId>FINEX-tree</artifactId>
     <version>3.2.0</version>
-    <name>tree</name>
+    <name>FINEX-tree</name>
     <description>Tree component for Vaadin 24</description>
 
     <properties>
-        <vaadin.version>24.2.2</vaadin.version>
+        <vaadin.version>24.4.2</vaadin.version>
 
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -156,7 +156,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <version>3.3.0</version>
+                        <version>3.7.0</version>
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
@@ -175,7 +175,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.3.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -189,7 +189,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.6.2</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>

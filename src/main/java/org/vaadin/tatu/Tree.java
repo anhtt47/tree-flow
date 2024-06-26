@@ -646,6 +646,14 @@ public class Tree<T> extends Composite<Div>
         }
     }
 
+    public void selectNotFireEvent(T item) {
+        treeGrid.select(item);
+    }
+
+    public void deselectNotFireEvent(T item){
+        treeGrid.deselect(item);
+    }
+
     /**
      * This method is a shorthand that delegates to the currently set selection
      * model.

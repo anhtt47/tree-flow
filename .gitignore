@@ -1,0 +1,18 @@
+### IntelliJ IDEA ###
+.idea/*
+!.idea/encodings.xml
+*.iws
+*.iml
+*.ipr
+out/
+/target/
+
+### VS Code ###
+.vscode/
+
+# The following files are generated/updated by vaadin-gradle-plugin
+node_modules/
+src/main/frontend/*
+pnpmfile.js
+vite.generated.ts
+webpack.generated.js
